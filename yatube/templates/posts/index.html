@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load cache %}
+{% load thumbnail %}
+{% block main %}
+{% include 'posts/includes/switcher.html' %}
+<div class="container">
+  <!--{% cache 20 index_page with page %}-->
+  <h1>Последние обновления на сайте</h1>
+  <article>
+  {% for post in page_obj %}
+    {% include 'includes/post.html' with link=True %}
+  {% endfor %}
+  <!--{% endcache %}-->
+  {% include 'posts/includes/paginator.html' %}
+</div>
+{%endblock%} 

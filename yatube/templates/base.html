@@ -1,0 +1,25 @@
+{% load static %}
+{% load thumbnail %}
+<!DOCTYPE html> <!-- Используется html 5 версии -->
+<html lang="ru"> <!-- Язык сайта - русский -->
+  <head>
+    {% include 'includes/head.html' %}
+    {% block title %}
+    <title> Это главная страница проекта YaTube </title>
+    {% endblock %}
+  </head
+  <body>
+    <header>
+      {% include 'includes/header.html' %}
+    <header>
+    <main> 
+      {% block main %}  
+      {% endblock %} 
+    </main>
+    <footer class="border-top text-center py-3">
+      {% block footer %}
+        {% include 'includes/footer.html' %}
+      {% endblock %}
+    </footer>
+  </body>
+</html>
