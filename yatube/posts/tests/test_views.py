@@ -240,6 +240,7 @@ class PaginatorViewsTest(TestCase):
             text=i,
             group=PaginatorViewsTest.group,) for i in range(13)]
         Post.objects.bulk_create(cls.posts)
+        cache.clear()
 
     # Тестирование паджинатора
     def test_paginator_contains_correct_records(self):

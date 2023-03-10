@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import Client, TestCase
 from posts.models import Group, Post
 
@@ -26,7 +27,7 @@ class PostURLTests(TestCase):
         )
 
     # Проверяем общедоступные страницы
-    def test_urls_uses_correct_template(self):
+    def test_urls_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         post = PostURLTests.post
         group = PostURLTests.group
@@ -112,5 +113,6 @@ class PostURLTests(TestCase):
         }
         for address, template in templates_url_names.items():
             with self.subTest(address=address):
+                cache.clear()
                 response = self.authorized_client.get(address)
                 self.assertTemplateUsed(response, template)
