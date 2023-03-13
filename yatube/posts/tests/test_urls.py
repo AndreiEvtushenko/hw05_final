@@ -26,7 +26,6 @@ class PostURLTests(TestCase):
             text='Тестовый пост',
         )
 
-    # Проверяем общедоступные страницы
     def test_urls_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         post = PostURLTests.post
@@ -42,13 +41,11 @@ class PostURLTests(TestCase):
                 response = self.guest_client.get(address)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    # Проверяем несуществующую страницу
     def test_unexisting_url_exists_at_desired_location(self):
         """Страница unexisting не существует."""
         response = self.guest_client.get('gest.html')
         self.assertNotEqual(response.status_code, HTTPStatus.OK)
 
-    # Проверяем доступность страниц для авторизованного пользователя
     def test_create_url_exists_at_desired_location(self):
         """Страница 'create/' доступна авторизованному пользователю."""
         response = self.authorized_client.get('/create/')
@@ -57,11 +54,9 @@ class PostURLTests(TestCase):
     def test_posts_edit_url_exists_at_desired_location(self):
         """Страница 'posts/edit/' доступна авторизованному пользователю."""
         post = PostURLTests.post
-        print(f'Страница с адресом PK = {post.pk}, {post.author}, {post.text}')
         response = self.authorized_client.get(f'/posts/{post.pk}/edit/')
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    # Проверяем редиректы для неавторизованного пользователя
     def test_create_url_exists_redirect_anonymous(self):
         """Страница 'create/' перенаправляет анонимного
         пользователя.
@@ -77,7 +72,6 @@ class PostURLTests(TestCase):
         response = self.guest_client.get(f'/posts/{post.pk}/edit/')
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
-        # Проверяем редиректы для неавторизованного пользователя
     def test_create_url_redirect_anonymous_on_admin_login(self):
         """Страница по адресу /create/ перенаправит анонимного
         пользователя на страницу логина.
@@ -97,10 +91,8 @@ class PostURLTests(TestCase):
         self.assertRedirects(
             response, (f'/auth/login/?next=/posts/{post.pk}/edit/'))
 
-    # Проверка вызываемых HTML-шаблонов
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        # Шаблоны по адресам
         post = PostURLTests.post
         group = PostURLTests.group
         templates_url_names = {

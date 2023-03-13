@@ -12,8 +12,6 @@ from django.urls import reverse
 from posts.forms import PostForm
 from posts.models import Follow, Group, Post
 
-# Создаем временную папку для медиа-файлов;
-# на момент теста медиа папка будет переопределена
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 User = get_user_model()
@@ -64,7 +62,6 @@ class PostViewsTests(TestCase):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
-    # Проверка 1: view-классы используют ожидаемые HTML-шаблоны
     def test_index_page_correct_template(self):
         """URL-адрес использует шаблон posts/index.html."""
         post = PostViewsTests.post
@@ -87,24 +84,18 @@ class PostViewsTests(TestCase):
                 self.assertTemplateUsed(response, template)
                 print(f'Finished with {template}')
 
-    # Проверка 2: в шаблон передан правильный контекст
     def test_index_page_list_is_1(self):
-        # Удостоверимся, что на страницу index передаётся
-        # ожидаемое количество объектов
+        """Проверка количества постов на страницу index"""
         cache.clear()
-        print('Проверка количества постов на страницу index')
         response = self.authorized_client.get(reverse('posts:index'))
         cache.clear()
         list_posts = response.context.get('page_obj')
-        print(list_posts)
         self.assertEqual(len(list_posts), 1)
         print('На страницу index выводиться правильное количество объектов')
 
     def test_post_detail_page_correct_id(self):
-        # Удостоверимся, что на страницу post_detail передаётся
-        # один пост, отфильтрованный по id
+        """Проверка поста по id на странице post_detail"""
         cache.clear()
-        print('Проверка поста по id на странице post_detail')
         response = self.authorized_client.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.pk}))
         first_object = response.context['posts'][0]
@@ -112,15 +103,10 @@ class PostViewsTests(TestCase):
         self.assertEqual(post_id, self.post.pk)
         print(f'На страницу post_detail выводить пост {self.post.id}')
 
-    # Проверяем, что словарь context страницы index
-    # в первом элементе списка post_list содержит ожидаемые значения
     def test_index_page_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
-        print('Проверка index_page на ожидаемые значения первого элемента')
         post = PostViewsTests.post
         response = self.authorized_client.get(reverse('posts:index'))
-        # Взяли первый элемент из списка и проверили, что его содержание
-        # совпадает с ожидаемым
         cache.clear()
         post_object = response.context['page_obj'][0]
         post_author = post_object.author
@@ -133,9 +119,6 @@ class PostViewsTests(TestCase):
         self.assertEqual(post_image, post.image)
         print('Проверка index_page успешно завершена')
 
-    # Проверяем, что словарь context содержит картинку
-    # на страницах:
-    # posts/index, posts:profile, posts:group_list, posts:post_detail
     def test_pages_correct_context(self):
         """URL-адрес использует шаблон posts/index.html."""
         post = PostViewsTests.post
@@ -163,26 +146,19 @@ class PostViewsTests(TestCase):
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
         }
-        # Проверяем, что типы полей формы в словаре context
-        # соответствуют ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
-                # Проверяет, что поле формы является экземпляром
-                # указанного класса
                 self.assertIsInstance(form_field, expected)
                 print(f'Finished with {value}, {expected}')
 
-    # Дополнительная проверка при создании поста
-    # присутствия в посторонней группе
     def test_create_page_additional(self):
-        # Пост на главной странице сайта
+        """Шаблон create сформирован с правильным контекстом."""
         cache.clear()
         response_index = self.authorized_client.get(reverse('posts:index'))
         post_object = response_index.context['page_obj'][0]
         post_pk = post_object.pk
         self.assertEqual(post_pk, self.post.pk)
-        # Пост на странице выбранной группы
         response_group_list = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': self.group.slug})
         )
@@ -190,7 +166,6 @@ class PostViewsTests(TestCase):
         post_object = response_group_list.context['page_obj'][0]
         post_pk = post_object.pk
         self.assertEqual(post_pk, self.post.pk)
-        # Пост в профайле пользователя
         cache.clear()
         response_profile = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': self.post.author})
@@ -198,7 +173,6 @@ class PostViewsTests(TestCase):
         post_object = response_profile.context['page_obj'][0]
         post_pk = post_object.pk
         self.assertEqual(post_pk, self.post.pk)
-        # Проверка поста в посторонней группе
         self.assertFalse(
             Post.objects.filter(
                 group=self.group_1
@@ -222,7 +196,6 @@ class PostViewsTests(TestCase):
 
 
 class PaginatorViewsTest(TestCase):
-    # Здесь создаются фикстуры: клиент и 13 тестовых записей.
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -242,8 +215,9 @@ class PaginatorViewsTest(TestCase):
         Post.objects.bulk_create(cls.posts)
         cache.clear()
 
-    # Тестирование паджинатора
     def test_paginator_contains_correct_records(self):
+        """Проверка паджинатора на корректное
+            количество записаей на страницу"""
         count_posts_first_page = 10
         count_posts_second_page = 3
         templates_page_names = {
@@ -288,6 +262,7 @@ class FollowTestCase(TestCase):
         )
 
     def test_profile_follow(self):
+        """Проверка создания подписки на автора"""
         self.authorized_client_1.post(
             reverse('posts:profile_follow',
                     args=[self.user_2.username]))
@@ -295,6 +270,7 @@ class FollowTestCase(TestCase):
                         (user=self.user_1, author=self.user_2).exists())
 
     def test_profile_unfollow(self):
+        """Проверка удаления подписки на автора"""
         Follow.objects.create(user=self.user_1, author=self.user_2)
         self.authorized_client_1.post(
             reverse('posts:profile_unfollow',
@@ -303,6 +279,8 @@ class FollowTestCase(TestCase):
                          (user=self.user_1, author=self.user_2).exists())
 
     def test_feed(self):
+        """Проверка корректного контекста на странице follow_index
+            с постами на подписаннго автора"""
         Follow.objects.create(user=self.user_1, author=self.user_2)
         response = self.authorized_client_1.get(reverse('posts:follow_index'))
         self.assertEqual(response.status_code, HTTPStatus.OK)

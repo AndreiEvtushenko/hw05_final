@@ -9,8 +9,6 @@ from django.urls import reverse
 from posts.forms import PostForm
 from posts.models import Comment, Group, Post
 
-# Создаем временную папку для медиа-файлов;
-# на момент теста медиа папка будет переопределена
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 User = get_user_model()
@@ -58,7 +56,6 @@ class PostFormTests(TestCase):
 
     def test_create_post_authorized_client(self):
         """Валидная форма создает запись в post."""
-        # Подсчитаем количество записей в group
         posts_count = Post.objects.count()
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -78,18 +75,14 @@ class PostFormTests(TestCase):
             'group': '1',
             'image': uploaded,
         }
-        # Отправляем POST-запрос
         response = self.authorized_client.post(
             reverse('posts:create'),
             data=form_data,
         )
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response,
                              reverse('posts:profile',
                                      kwargs={'username': self.user}))
-        # Проверяем, увеличилось ли число постов
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        # Проверяем, что создалась запись с заданным слагом
         self.assertTrue(
             Post.objects.filter(
                 group=self.group.slug,
@@ -98,22 +91,19 @@ class PostFormTests(TestCase):
         )
 
     def test_create_post_guest_client(self):
+        """Валидная форма добавляет запись в post."""
         posts_count = Post.objects.count()
         form_data = {
             'text': 'Тестовый текст',
             'group': '1',
             'image': self.uploaded,
         }
-        # Отправляем POST-запрос
         response = self.guest_client.post(
             reverse('posts:create'),
             data=form_data,
         )
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response, '/auth/login/?next=/create/')
-        # Проверяем, увеличилось ли число постов
         self.assertNotEqual(Post.objects.count(), posts_count + 1)
-        # Проверяем, что не создалась запись с заданным слагом
         self.assertFalse(
             Post.objects.filter(
                 group=self.group.slug,
@@ -123,42 +113,32 @@ class PostFormTests(TestCase):
 
     def test_post_edit_post_authorized_client(self):
         """Валидная форма изменяет запись в post."""
-        # Подсчитаем количество записей в group
         posts_count = Post.objects.count()
         form_data = {
             'text': 'Другой тестовый текст',
-        }
-        # Отправляем POST-запрос
+            }
         response = self.authorized_client.post(
             reverse('posts:post_edit', kwargs={'post_id': self.post.pk}),
             data=form_data,
         )
-        # Проверяем изменение в посте
         self.assertNotEqual('Другой тестовый текст', self.post.text)
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response,
                              reverse('posts:post_detail',
                                      kwargs={'post_id': self.post.pk}))
-        # Проверяем, увеличилось ли число постов
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_post_edit_post_guest_client(self):
         """Валидная форма изменяет запись в post."""
-        # Подсчитаем количество записей в group
         posts_count = Post.objects.count()
         form_data = {
             'text': 'Другой тестовый текст',
         }
-        # Отправляем POST-запрос
         response = self.guest_client.post(
             reverse('posts:post_edit', kwargs={'post_id': self.post.pk}),
             data=form_data,
         )
-        # Проверяем изменение в посте
         self.assertNotEqual('Другой тестовый текст', self.post.text)
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response, '/auth/login/?next=/posts/1/edit/')
-        # Проверяем, увеличилось ли число постов
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_create_comment_authorized_client(self):
@@ -168,18 +148,14 @@ class PostFormTests(TestCase):
             'author': self.user,
             'text': 'Тестовый коммент',
         }
-        # Отправляем POST-запрос
         response = self.authorized_client.post(
             reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
             data=form_data,
         )
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response,
                              reverse('posts:post_detail',
                                      kwargs={'post_id': self.post.pk}))
-        # Проверяем, увеличилось ли число постов
         self.assertEqual(Comment.objects.count(), comment_count + 1)
-        # Проверяем, что не создалась запись с заданным слагом
         self.assertTrue(
             Comment.objects.filter(
                 post=self.post.pk,
@@ -194,16 +170,12 @@ class PostFormTests(TestCase):
             'author': self.guest_client,
             'text': 'Тестовый коммент',
         }
-        # Отправляем POST-запрос
         response = self.guest_client.post(
             reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
             data=form_data,
         )
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response, '/auth/login/?next=/posts/1/comment/')
-        # Проверяем, увеличилось ли число постов
         self.assertNotEqual(Comment.objects.count(), comment_count + 1)
-        # Проверяем, что не создалась запись с заданным слагом
         self.assertFalse(
             Comment.objects.filter(
                 post=self.post.pk,
