@@ -8,8 +8,6 @@ from .forms import CommentForm, PostForm
 from .models import Follow, Group, Post
 from .utils import paginator
 
-AMOUNT_OF_POSTS = 10
-
 
 @cache_page(20)
 def index(request):
@@ -39,7 +37,8 @@ def group_posts(request, slug):
 def profile(request, username):
     template = 'posts/profile.html'
     author = get_object_or_404(User, username=username)
-    posts_of_author = Post.objects.filter(author=author)
+    posts_of_author = Post.objects.select_related('author')
+    # posts_of_author = Post.objects.filter(author=author)
     page_obj = paginator(request, posts_of_author)
     count_posts_of_author = len(posts_of_author)
     if request.user.is_authenticated:

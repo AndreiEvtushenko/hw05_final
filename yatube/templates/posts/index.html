@@ -10,6 +10,7 @@
   {% for post in page_obj %}
     {% include 'includes/post.html' with link=True %}
   {% endfor %}
+  </article>
   <!--{% endcache %}-->
   {% include 'posts/includes/paginator.html' %}
 </div>
